@@ -1,0 +1,205 @@
+==========================================================================================
+ PARTE A. ARCHIVO ALEATORIO INGENUO
+==========================================================================================
+ Guardado: resultados_ej3/transacciones_ingenuo.csv  (20000 filas)
+    monto  hora  distancia_km  ingreso_mensual  fraude
+1790200.0    22        254.18       23166000.0       1
+6399500.0    11        701.13       19976000.0       0
+4673200.0    19        228.00       22438000.0       1
+3705600.0     5        922.95       11598000.0       1
+3549800.0    16        194.52       18782000.0       0
+7905400.0     4        142.56       25621000.0       0
+9051500.0     5        373.25       20054000.0       0
+1774400.0    22        459.40       25798000.0       1
+
+==========================================================================================
+ PARTE B. REVISIÓN CRÍTICA DEL ARCHIVO INGENUO Y CAMBIOS REALIZADOS
+==========================================================================================
+ Indicador                                      Ingenuo        Realista
+ Tasa de fraude                                 49.86 %          2.25 %
+ Asimetría del monto                               0.01           18.56
+ Mediana del monto (COP)                      5,009,600          42,200
+ Transacciones con monto > ingreso              14.16 %          0.91 %
+ Compras entre 0 h y 5 h                         25.4 %           3.4 %
+ Mediana de distancia (km)                        495.2             4.7
+ Distancia > 100 km                              89.8 %           6.5 %
+ Ingreso < salario mínimo                         1.6 %           0.0 %
+ AUC univariada: monto                            0.501           0.754
+ AUC univariada: hora                             0.502           0.670
+ AUC univariada: distancia                        0.503           0.885
+ AUC univariada: ingreso                          0.503           0.517
+ AUC univariada: monto/ingreso                    0.500           0.765
+
+ Problemas detectados  ->  cambio aplicado
+  1. Fraude al 50 %: en tarjetas la tasa real es < 1-2 %.
+       -> Tasa de fraude configurable, 2 % por defecto (--tasa-fraude).
+  2. La etiqueta es independiente de las variables: no hay patrón que aprender.
+       -> El fraude se genera con mecanismos propios (3 patrones) distintos a los legítimos.
+  3. Montos uniformes hasta 10 M: el gasto real es asimétrico (muchas compras pequeñas).
+       -> Monto log-normal, proporcional al ingreso del cliente (~1.2 % en mediana).
+  4. Monto sin relación con el ingreso: ~1/3 de las compras superan el ingreso mensual.
+       -> El fraude de alto valor usa 30-250 % del ingreso; lo legítimo rara vez lo supera.
+  5. Hora uniforme: se compra igual a las 3 a.m. que a mediodía.
+       -> Perfil horario diurno (picos 12-13 h y 18-20 h); fraude nocturno más frecuente.
+  6. Distancia uniforme 0-1000 km: casi nadie compra lejos de casa.
+       -> Distancia log-normal (mediana ~4 km), 8 % municipios cercanos y 2 % viajes.
+  7. Ingresos uniformes 1-30 M: no refleja la distribución real (ni el salario mínimo).
+       -> Ingreso log-normal por cliente (mediana 3.2 M) con piso en el salario mínimo.
+  8. Cada fila es un individuo distinto: no existen clientes recurrentes.
+       -> Cada cliente realiza en promedio 8 transacciones con el mismo ingreso.
+  9. Etiquetas perfectas: en la realidad hay contracargos erróneos y fraudes no reportados.
+       -> Ruido de etiqueta del 0.2 %.
+ 10. Todos los fraudes se parecen (o no se parecen a nada).
+       -> Fraude camuflado (30 %) que se confunde con compras normales: el problema no es trivial.
+ 11. Todo monto alto sería fraude: en la realidad hay compras grandes legítimas.
+       -> 1.5 % de compras grandes planificadas (20-120 % del ingreso), de día y cerca de casa.
+
+==========================================================================================
+ PARTE C. ARCHIVO REALISTA
+==========================================================================================
+ Guardado: resultados_ej3/transacciones_realista.csv  (20000 filas, 450 fraudes)
+   monto  hora  distancia_km  ingreso_mensual  fraude
+ 27200.0    15          7.13        2184000.0       0
+297300.0    20          2.32        5597000.0       0
+271100.0     9          4.28        5771000.0       0
+ 56100.0    16          1.48        6236000.0       0
+ 17900.0    21          5.38        3236000.0       0
+ 12000.0     8          3.53       11368000.0       0
+ 28900.0    18          6.48        6337000.0       0
+412400.0    13         22.57        4184000.0       0
+
+ Fraudes por patrón de generación (antes del ruido de etiqueta):
+   no_presencial_alto_valor       195
+   camuflado                      114
+   prueba_de_tarjeta               99
+
+ Estadísticas descriptivas por clase (medianas):
+            monto  hora  distancia_km  ingreso_mensual
+fraude                                                
+0         41500.0  15.0         4.540        3238000.0
+1       1081050.0  11.0       191.415        2997000.0
+
+==========================================================================================
+ PARTE D. MODELO POR PROGRAMACIÓN GENÉTICA
+==========================================================================================
+ Terminales T : ['M', 'I', 'D', 'HC', 'HS'] + constantes efímeras R en [-2, 2]
+ Funciones  F : +, -, *, div protegida, neg, max, min, si_mayor(a,b,c,d)
+ Aptitud      : AUC-ROC(entrenamiento) - λ·nodos  (λ = 0.0002)
+ Parámetros   : pobl=400, gen=60, pc=0.7, pm=0.3, elitismo=3, altura≤8
+
+ D.1  Control: PG sobre el archivo INGENUO (no debería aprender nada)
+   [ingenuo] gen   0  aptitud=0.5101  AUC ent=0.5111  AUC val=0.5031  nodos mejor=  5  nodos medio=11.9
+   [ingenuo] gen  10  aptitud=0.5121  AUC ent=0.5139  AUC val=0.5020  nodos mejor=  9  nodos medio=8.5
+   [ingenuo] gen  20  aptitud=0.5147  AUC ent=0.5157  AUC val=0.5063  nodos mejor=  5  nodos medio=7.7
+   AUC en prueba del mejor modelo (ingenuo): 0.4973  ->  equivalente al azar
+
+ D.2  PG sobre el archivo REALISTA
+   Partición estratificada: entrenamiento=12000 (270 fraudes), validación=4000 (90), prueba=4000 (90)
+   --- corrida independiente 1/3
+   gen   0  aptitud=0.9293  AUC ent=0.9307  AUC val=0.9078  nodos mejor=  7  nodos medio=11.0
+   gen  10  aptitud=0.9401  AUC ent=0.9411  AUC val=0.9217  nodos mejor=  5  nodos medio=4.9
+   gen  20  aptitud=0.9411  AUC ent=0.9433  AUC val=0.9218  nodos mejor= 11  nodos medio=6.3
+   gen  30  aptitud=0.9433  AUC ent=0.9455  AUC val=0.9167  nodos mejor= 11  nodos medio=9.4
+   gen  40  aptitud=0.9478  AUC ent=0.9512  AUC val=0.9254  nodos mejor= 17  nodos medio=12.2
+   gen  50  aptitud=0.9490  AUC ent=0.9524  AUC val=0.9297  nodos mejor= 17  nodos medio=18.1
+   gen  60  aptitud=0.9503  AUC ent=0.9537  AUC val=0.9342  nodos mejor= 17  nodos medio=19.0
+   --- corrida independiente 2/3
+   gen   0  aptitud=0.9270  AUC ent=0.9276  AUC val=0.9044  nodos mejor=  3  nodos medio=11.7
+   gen  10  aptitud=0.9410  AUC ent=0.9424  AUC val=0.9217  nodos mejor=  7  nodos medio=7.3
+   gen  20  aptitud=0.9432  AUC ent=0.9462  AUC val=0.9215  nodos mejor= 15  nodos medio=8.5
+   gen  30  aptitud=0.9450  AUC ent=0.9472  AUC val=0.9258  nodos mejor= 11  nodos medio=12.6
+   gen  40  aptitud=0.9459  AUC ent=0.9501  AUC val=0.9335  nodos mejor= 21  nodos medio=13.0
+   gen  50  aptitud=0.9472  AUC ent=0.9502  AUC val=0.9259  nodos mejor= 15  nodos medio=15.0
+   gen  60  aptitud=0.9472  AUC ent=0.9502  AUC val=0.9259  nodos mejor= 15  nodos medio=15.1
+   --- corrida independiente 3/3
+   gen   0  aptitud=0.9301  AUC ent=0.9307  AUC val=0.9078  nodos mejor=  3  nodos medio=11.8
+   gen  10  aptitud=0.9401  AUC ent=0.9411  AUC val=0.9217  nodos mejor=  5  nodos medio=4.2
+   gen  20  aptitud=0.9420  AUC ent=0.9434  AUC val=0.9169  nodos mejor=  7  nodos medio=5.8
+   gen  30  aptitud=0.9451  AUC ent=0.9481  AUC val=0.9203  nodos mejor= 15  nodos medio=8.6
+   gen  40  aptitud=0.9451  AUC ent=0.9481  AUC val=0.9203  nodos mejor= 15  nodos medio=12.5
+   gen  50  aptitud=0.9451  AUC ent=0.9481  AUC val=0.9203  nodos mejor= 15  nodos medio=12.8
+   gen  60  aptitud=0.9459  AUC ent=0.9489  AUC val=0.9349  nodos mejor= 15  nodos medio=13.7
+   Se designa el modelo de la corrida con mayor AUC de validación (0.9378)
+
+ MODELO DESIGNADO (mejor AUC en validación entre la élite de cada generación)
+   Nodos: 17   Altura: 5
+   Programa (prefijo DEAP): max(HS, sum(max(HS, M), si_mayor(M, D, D, si_mayor(-0.61, M, max(D, HC), M))))
+   Puntaje de riesgo s(x) = max(HS, (max(HS, M) + si(M > D; D; si(-0.61 > M; max(D, HC); M))))
+   donde M, I, D son log10(monto), log10(ingreso), log10(1+dist) estandarizados
+   (medias 4.678, 6.540, 0.896; desv. 0.616, 0.322, 0.564), HC = cos(2πh/24), HS = sin(2πh/24).
+
+==========================================================================================
+ PARTE E. EVALUACIÓN EN EL CONJUNTO DE PRUEBA (datos nunca vistos)
+==========================================================================================
+ Umbral de decisión (máx. F1 en validación): 3.5011
+                     modelo  AUC-ROC  AUC-PR precision  recall     F1    TP    FP    FN  costo_MCOP
+  Sin modelo (nunca fraude)   0.5000  0.0225     0.000   0.000  0.000     0     0    90       400.8
+                  PG (DEAP)   0.9433  0.7321     0.709   0.678  0.693    61    25    29        11.9
+        Regresión logística   0.9165  0.6801     0.803   0.544  0.649    49    12    41        28.1
+   Árbol decisión (prof. 4)   0.9004  0.6086     0.612   0.789  0.689    71    45    19        27.6
+ costo_MCOP = montos de fraudes NO detectados + 15,000 COP por alerta revisada (millones de COP)
+
+ Matriz de confusión del modelo PG (prueba):
+                     predicho legítima   predicho fraude
+   real legítima                  3885                25
+   real fraude                      29                61
+
+ Recall del modelo PG por patrón de fraude (prueba):
+   no_presencial_alto_valor     100.0%  (49 casos)
+   prueba_de_tarjeta             35.7%  (14 casos)
+   camuflado                     43.8%  (16 casos)
+   (ruido de etiqueta)            0.0%  (11 casos: legítimas marcadas como fraude)
+
+ Importancia por permutación (caída de AUC al barajar cada terminal):
+   M   monto         0.1936  ######################################
+   D   distancia     0.0832  ################
+   HS  hora (sin)    0.0152  ###
+   HC  hora (cos)    0.0053  #
+   I   ingreso       0.0000  
+
+ Reglas del árbol de decisión de referencia (para comparar interpretabilidad):
+   |--- D <= 0.59
+   |   |--- M <= 1.67
+   |   |   |--- M <= 1.22
+   |   |   |   |--- HS <= 0.98
+   |   |   |   |   |--- class: 0
+   |   |   |   |--- HS >  0.98
+   |   |   |   |   |--- class: 0
+   |   |   |--- M >  1.22
+   |   |   |   |--- I <= -0.80
+   |   |   |   |   |--- class: 1
+   |   |   |   |--- I >  -0.80
+   |   |   |   |   |--- class: 0
+   |   |--- M >  1.67
+   |   |   |--- D <= -0.41
+   |   |   |   |--- class: 0
+   |   |   |--- D >  -0.41
+   |   |   |   |--- I <= 2.21
+   |   |   |   |   |--- class: 1
+   |   |   |   |--- I >  2.21
+   |   |   |   |   |--- class: 0
+   |--- D >  0.59
+   |   |--- M <= 1.49
+   |   |   |--- D <= 2.27
+   |   |   |   |--- M <= -1.20
+   |   |   |   |   |--- class: 1
+   |   |   |   |--- M >  -1.20
+   |   |   |   |   |--- class: 0
+   |   |   |--- D >  2.27
+   |   |   |   |--- M <= -0.62
+   |   |   |   |   |--- class: 1
+   |   |   |   |--- M >  -0.62
+   |   |   |   |   |--- class: 0
+   |   |--- M >  1.49
+   |   |   |--- I <= 2.80
+   |   |   |   |--- M <= 1.64
+   |   |   |   |   |--- class: 1
+   |   |   |   |--- M >  1.64
+   |   |   |   |   |--- class: 1
+   |   |   |--- I >  2.80
+   |   |   |   |--- class: 0
+   
+
+ PARTE F. Modelo exportado a resultados_ej3/modelo_fraude_pg.py (verificado contra el árbol: OK)
+
+ Archivos generados en /home/claude/resultados_ej3   (tiempo total 122 s)

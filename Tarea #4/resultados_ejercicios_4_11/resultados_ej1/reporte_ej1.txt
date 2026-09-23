@@ -1,0 +1,95 @@
+==============================================================================
+ PG - DISEÑO DEL DECODIFICADOR BCD -> 7 SEGMENTOS
+==============================================================================
+ Terminales T : ['A', 'B', 'C', 'D']
+ Funciones  F : ['AND/2', 'OR/2', 'NOT/1', 'XOR/2'] (conjunto 'extendido')
+ Aptitud      : f_apt = 1/(0.1 + Σ|y_j − yc_j|)  [máx 10]  + mín. compuertas
+ Modo         : dontcare  ->  filas evaluadas: 10 de 16
+ Parámetros   : pobl=300, gen=200, pc=0.7, pm=0.2, torneo=4, elitismo=2, altura≤8
+
+ Tabla de verdad objetivo:
+   dig  A B C D   a b c d e f g
+    0   0 0 0 0   1 1 1 1 1 1 0
+    1   0 0 0 1   0 1 1 0 0 0 0
+    2   0 0 1 0   1 1 0 1 1 0 1
+    3   0 0 1 1   1 1 1 1 0 0 1
+    4   0 1 0 0   0 1 1 0 0 1 1
+    5   0 1 0 1   1 0 1 1 0 1 1
+    6   0 1 1 0   1 0 1 1 1 1 1
+    7   0 1 1 1   1 1 1 0 0 0 0
+    8   1 0 0 0   1 1 1 1 1 1 1
+    9   1 0 0 1   1 1 1 1 0 1 1
+   10-15         x x x x x x x   (no importa / don't care)
+
+ EVOLUCIÓN
+   segmento a: errores=0  compuertas= 5  nodos= 9  altura=4  (perfecto en gen 6, semilla 42)
+   segmento b: errores=0  compuertas= 3  nodos= 6  altura=3  (perfecto en gen 3, semilla 139)
+   segmento c: errores=0  compuertas= 3  nodos= 6  altura=2  (perfecto en gen 1, semilla 236)
+   segmento d: errores=0  compuertas= 8  nodos=15  altura=5  (perfecto en gen 5, semilla 333)
+   segmento e: errores=0  compuertas= 4  nodos= 7  altura=4  (perfecto en gen 109, semilla 430)
+   segmento f: errores=0  compuertas= 8  nodos=14  altura=6  (perfecto en gen 24, semilla 527)
+   segmento g: errores=0  compuertas= 5  nodos=11  altura=3  (perfecto en gen 8, semilla 624)
+
+ RESULTADOS POR SEGMENTO
+ ----------------------------------------------------------------------------
+ Segmento a   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 9, simplificado = 9
+   Programa evolucionado  : OR(XOR(AND(D, NOT(A)), NOT(B)), C)
+   Preorden               : OR XOR AND D NOT A NOT B C
+   Posorden (polaca inv.) : D A NOT AND B NOT XOR C OR
+   Expresión booleana     : a = (((D·A') ⊕ B') + C)
+ Segmento b   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 6, simplificado = 6
+   Programa evolucionado  : NOT(AND(B, XOR(C, D)))
+   Preorden               : NOT AND B XOR C D
+   Posorden (polaca inv.) : B C D XOR AND NOT
+   Expresión booleana     : b = ((B·(C ⊕ D)))'
+ Segmento c   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 6, simplificado = 6
+   Programa evolucionado  : OR(OR(B, D), NOT(C))
+   Preorden               : OR OR B D NOT C
+   Posorden (polaca inv.) : B D OR C NOT OR
+   Expresión booleana     : c = ((B + D) + C')
+ Segmento d   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 15, simplificado = 15
+   Programa evolucionado  : XOR(AND(D, A), OR(AND(C, NOT(B)), XOR(XOR(D, NOT(B)), C)))
+   Preorden               : XOR AND D A OR AND C NOT B XOR XOR D NOT B C
+   Posorden (polaca inv.) : D A AND C B NOT AND D B NOT XOR C XOR OR XOR
+   Expresión booleana     : d = ((D·A) ⊕ ((C·B') + ((D ⊕ B') ⊕ C)))
+ Segmento e   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 7, simplificado = 7
+   Programa evolucionado  : NOT(OR(AND(B, NOT(C)), D))
+   Preorden               : NOT OR AND B NOT C D
+   Posorden (polaca inv.) : B C NOT AND D OR NOT
+   Expresión booleana     : e = (((B·C') + D))'
+ Segmento f   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 14, simplificado = 14
+   Programa evolucionado  : NOT(OR(AND(NOT(B), OR(C, AND(NOT(A), D))), AND(C, D)))
+   Preorden               : NOT OR AND NOT B OR C AND NOT A D AND C D
+   Posorden (polaca inv.) : B NOT C A NOT D AND OR AND C D AND OR NOT
+   Expresión booleana     : f = (((B'·(C + (A'·D))) + (C·D)))'
+ Segmento g   f_apt = 10.0000   nodos (Cuenta_Nodos): evolucionado = 11, simplificado = 11
+   Programa evolucionado  : OR(XOR(AND(C, D), XOR(C, A)), XOR(B, C))
+   Preorden               : OR XOR AND C D XOR C A XOR B C
+   Posorden (polaca inv.) : C D AND C A XOR XOR B C XOR OR
+   Expresión booleana     : g = (((C·D) ⊕ (C ⊕ A)) + (B ⊕ C))
+
+ VERIFICACIÓN EXHAUSTIVA DE LA TABLA DE VERDAD
+    _         _    _         _    _    _    _    _ 
+   | |    |   _|   _|  |_|  |_   |_     |  |_|  |_|
+   |_|    |  |_    _|    |   _|  |_|    |  |_|   _|
+    0    1    2    3    4    5    6    7    8    9 
+   Errores totales: 0  ->  CIRCUITO CORRECTO
+   (Salida del circuito para 10..15, no especificada por el problema:)
+    _    _              _    _ 
+    _|   _|  |_|  |_   |     _|
+   |_     |    |    |  |_|   _|
+
+ COSTO DEL CIRCUITO Y COMPARACIÓN CON DISEÑO CLÁSICO (Quine-McCluskey / Karnaugh)
+   seg  PG: compuertas  QM: compuertas*   SOP mínima (QM)
+   a                 5                7   a = B'·D' + C + B·D + A
+   b                 3                7   b = B' + C'·D' + C·D
+   c                 3                3   c = C' + D + B
+   d                 8               12   d = B'·D' + B'·C + B·C'·D + C·D' + A
+   e                 4                5   e = B'·D' + C·D'
+   f                 8                8   f = C'·D' + B·C' + B·D' + A
+   g                 5                9   g = B'·C + B·C' + A + C·D'
+   Σ                36               51
+   Compuertas del circuito PG compartiendo subexpresiones entre segmentos: 29
+   * QM: compuertas de 2 entradas equivalentes + inversores, sin compartir.
+
+ Archivos generados en /home/claude/resultados_ej1   (tiempo total 18.7 s)
